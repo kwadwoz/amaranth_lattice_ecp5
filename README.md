@@ -96,6 +96,6 @@ A UART interface (via CP2102 USB adapter on GPIO header J8) will be used to stre
 
 ## Board Notes
 
-- The 200 MHz X2 oscillator (Y19/W20) connects to SERDES PLLs — not usable as a regular IO clock.
+- The 200 MHz X2 oscillator (Y19/W20) connects to SERDES PLLs , not usable as a regular IO clock.
 - The onboard FTDI UART connection to the FPGA requires 0Ω resistors R34/R35 which are not installed by default. Use a CP2102 adapter on J8 instead.
 - Programming uses JTAG via the FTDI FT2232H (Channel A). The device appears as `ECP5 5G EVN` on macOS.
