@@ -28,7 +28,7 @@
 
 from amaranth import *
 from amaranth.vendor import LatticeECP5Platform
-from amaranth.build import Resource, Pins, PinsN, Clock, Attrs
+from amaranth.build import Resource, Subsignal, Pins, PinsN, Clock, Attrs
 
 
 
@@ -58,6 +58,15 @@ class ECP5EVNPlatform(LatticeECP5Platform):
         Resource("led", 5, PinsN("C17", dir="o"), Attrs(IO_TYPE="LVCMOS33")),
         Resource("led", 6, PinsN("A17", dir="o"), Attrs(IO_TYPE="LVCMOS33")),
         Resource("led", 7, PinsN("B17", dir="o"), Attrs(IO_TYPE="LVCMOS33")),
+        # UART through CP2102 on J39:
+        #   CP2102 TXD -> J39 pin 4  -> FPGA RX (D15)
+        #   CP2102 RXD <- J39 pin 5  <- FPGA TX (B15)
+        #   CP2102 GND -> J39 GND
+        Resource("uart", 0,
+            Subsignal("rx", Pins("D15", dir="i")),
+            Subsignal("tx", Pins("B15", dir="o")),
+            Attrs(IO_TYPE="LVCMOS33"),
+        ),
         # Generic push button SW4 (Table 7.3, User Guide), active low
         Resource("button", 0, PinsN("P4", dir="i"), Attrs(IO_TYPE="LVCMOS33")),
     ]

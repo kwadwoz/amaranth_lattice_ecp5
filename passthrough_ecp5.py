@@ -12,7 +12,7 @@
 
 from amaranth import *
 from amaranth.vendor import LatticeECP5Platform
-from amaranth.build import Resource, Pins, PinsN, Clock, Attrs
+from amaranth.build import Resource, Subsignal, Pins, PinsN, Clock, Attrs
 
 
 class ECP5EVNPlatform(LatticeECP5Platform):
@@ -40,6 +40,15 @@ class ECP5EVNPlatform(LatticeECP5Platform):
         Resource("sw", 0, PinsN("J1",  dir="i"), Attrs(IO_TYPE="LVCMOS33")),
         Resource("sw", 1, PinsN("H1",  dir="i"), Attrs(IO_TYPE="LVCMOS33")),
         Resource("sw", 2, PinsN("K1",  dir="i"), Attrs(IO_TYPE="LVCMOS33")),
+        # UART through CP2102 on J39:
+        #   CP2102 TXD -> J39 pin 4  -> FPGA RX (D15)
+        #   CP2102 RXD <- J39 pin 5  <- FPGA TX (B15)
+        #   CP2102 GND -> J39 GND
+        Resource("uart", 0,
+            Subsignal("rx", Pins("D15", dir="i")),
+            Subsignal("tx", Pins("B15", dir="o")),
+            Attrs(IO_TYPE="LVCMOS33"),
+        ),
 
     ]
 

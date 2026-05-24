@@ -42,6 +42,8 @@ pip install amaranth
 | `DPLL.py` | DPLL SAT solver in Python (Algorithm 5.1/5.2) — software reference |
 | `traffic_light_ecp5.py` | Traffic light FSM on the FPGA — first hardware design |
 | `passthrough_ecp5.py` | Switch → LED passthrough — I/O connectivity test |
+| `uart_echo_ecp5.py` | UART echo design — receives bytes over serial and sends them back |
+| `hello_fpga.py` | Python host script — sends a message over UART and prints the echo |
 | `ecp5-5g-evn.cfg` | OpenOCD config for programming the ECP5-5G EVN board |
 
 ---
@@ -60,11 +62,17 @@ Output goes to `build/top.bit` and `build/top.svf`.
 
 **Program the board via JTAG:**
 
+Two USB connections are required:
+- **JTAG USB** (FT2232H, connector J32) — for programming
+- **CP2102 USB adapter** (connector J39) — for UART communication
+
 ```bash
 sudo ~/oss-cad-suite/bin/openocd \
-  -f ecp5-5g-evn.cfg \
-  -c "init; svf build/top.svf; exit"
+  -f /Users/zenasboamah/Amaranth_Tutorial/ecp5-5g-evn.cfg \
+  -c "init; svf /Users/zenasboamah/Amaranth_Tutorial/build/top.svf; exit"
 ```
+
+Use absolute paths with `sudo` — relative paths will fail because sudo runs from a different working directory.
 
 ---
 
@@ -82,6 +90,35 @@ A finite state machine that cycles through RED → GREEN → YELLOW → RED, spe
 
 Wires the DIP switches directly to LEDs with no logic — used to verify pin assignments and I/O connectivity before adding computation.
 
+### UART Echo (`uart_echo_ecp5.py`)
+
+Receives bytes over UART and echoes them back to the host. Uses a software UART implemented in Amaranth with a `UARTReceiver` and `UARTTransmitter` FSM running at 115200 baud on a 12 MHz clock (104 clocks per bit).
+
+**Wiring (J39 header):**
+
+```
+CP2102 TXD  →  J39 pin 4  →  FPGA RX (D15)
+CP2102 RXD  ←  J39 pin 5  ←  FPGA TX (B15)
+CP2102 GND  →  J39 GND
+```
+
+**Testing with screen:**
+
+```bash
+screen /dev/tty.usbserial-0001 115200
+# Type any character — it echoes back
+# Exit: Ctrl+A then K then Y
+```
+
+**Testing with Python:**
+
+```bash
+python hello_fpga.py
+# Prints: Received: b'Hello FPGA\r\n'
+```
+
+LED 0 (A13) lights while receiving, LED 1 (A12) lights while transmitting.
+
 ---
 
 ## Project Direction
@@ -90,12 +127,12 @@ The end goal is a **CDCL (Conflict-Driven Clause Learning) SAT solver accelerato
 
 The software DPLL implementation in `DPLL.py` serves as a functional reference for the hardware design.
 
-A UART interface (via CP2102 USB adapter on GPIO header J8) will be used to stream CNF formulas to the FPGA and receive satisfying assignments back to the host.
+A UART interface (via CP2102 USB adapter on GPIO header J39) will be used to stream CNF formulas to the FPGA and receive satisfying assignments back to the host.
 
 ---
 
 ## Board Notes
 
 - The 200 MHz X2 oscillator (Y19/W20) connects to SERDES PLLs , not usable as a regular IO clock.
-- The onboard FTDI UART connection to the FPGA requires 0Ω resistors R34/R35 which are not installed by default. Use a CP2102 adapter on J8 instead.
+- The onboard FTDI UART connection to the FPGA requires 0Ω resistors R34/R35 which are not installed by default. Use a CP2102 adapter on J39 instead.
 - Programming uses JTAG via the FTDI FT2232H (Channel A). The device appears as `ECP5 5G EVN` on macOS.
