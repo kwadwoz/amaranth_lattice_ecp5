@@ -78,7 +78,7 @@ Info:     at iteration #5, type ALL: wirelen solved = 362, spread = 567, legal =
 Info:     at iteration #6, type ALL: wirelen solved = 370, spread = 524, legal = 591; time = 0.00s
 Info:     at iteration #7, type ALL: wirelen solved = 380, spread = 513, legal = 573; time = 0.00s
 Info:     at iteration #8, type ALL: wirelen solved = 387, spread = 513, legal = 589; time = 0.00s
-Info: HeAP Placer Time: 0.07s
+Info: HeAP Placer Time: 0.06s
 Info:   of which solving equations: 0.01s
 Info:   of which spreading cells: 0.01s
 Info:   of which strict legalisation: 0.00s
@@ -126,9 +126,9 @@ Info: Setting up routing queue.
 Info: Routing 383 arcs.
 Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
 Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
-Info:        503 |      117        368 |  117   368 |         0|       0.03       0.03|
+Info:        503 |      117        368 |  117   368 |         0|       0.05       0.05|
 Info: Routing complete.
-Info: Router1 time 0.03s
+Info: Router1 time 0.05s
 Info: Checksum: 0x875f093c
 
 Info: Critical path report for clock '$glbnet$clk' (posedge -> posedge):

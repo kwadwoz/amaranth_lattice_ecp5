@@ -1,0 +1,7 @@
+c UNSAT: (x1 v x2) ^ (~x1 v x2) ^ (x1 v ~x2) ^ (~x1 v ~x2)
+c No assignment can satisfy all four clauses.
+p cnf 2 4
+1 2 0
+-1 2 0
+1 -2 0
+-1 -2 0

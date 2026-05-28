@@ -48,6 +48,7 @@ sby --version   # should print SBY v0.65
 | `traffic_light_ecp5.py` | Traffic light FSM — first hardware design |
 | `passthrough_ecp5.py` | Switch → LED passthrough — I/O connectivity test |
 | `uart_echo_ecp5.py` | UART echo — receives bytes over serial and sends them back |
+| `hardware_stub_ecp5.py` | Hardware protocol stub — parses binary CNF packets, returns hardcoded UNSAT (0x00); validates the full wire protocol end-to-end |
 | `ecp5-5g-evn.cfg` | OpenOCD config for programming the ECP5-5G EVN board |
 
 **Host scripts:**
@@ -144,6 +145,28 @@ python hello_fpga.py
 
 LED 0 (A13) lights while receiving, LED 1 (A12) lights while transmitting.
 
+### Hardware Protocol Stub (`hardware_stub_ecp5.py`)
+
+The hardware equivalent of `stub_core.py`. Parses the binary CNF wire protocol but ignores the formula — returns a hardcoded UNSAT (`0x00`) for every packet. Used to validate the full host → FPGA → host communication loop before a real solver is implemented.
+
+**Protocol flow:**
+```
+Host sends:   0xAA | num_vars | num_clauses | <literals + 0x00 terminators> | 0xFF
+FPGA replies: 0x00  (UNSAT — hardcoded)
+```
+
+**Confirmed working:**
+```
+Formula : 3 variables, 3 clauses
+Packet  : 14 bytes
+Hex     : aa030301820300810200020300ff
+Result  : UNSAT
+```
+
+- LED0 (A13) lights while receiving bytes
+- LED1 (A12) lights while sending the response
+- LED2 (B19) lights while a packet is in progress (between `0xAA` and `0xFF`)
+
 ---
 
 ## Project Direction
@@ -171,7 +194,7 @@ Outer Loop (Bayesian Optimization)
 - **Assignment Verifier** — checks returned assignments satisfy the formula in O(total literals). SAT results → `VERIFIED` or `CORRECTNESS_VIOLATION`. UNSAT results → `NOT_APPLICABLE` with optional DPLL cross-check as temporary safety net until SymbiYosys Stage 3 is wired up.
 
 **Phase status:**
-- Phase 0 (Host Harness): complete — `infrastructure/` built, 14 tests passing
+- Phase 0 (Host Harness): complete — `infrastructure/` built, 14 tests passing, wire protocol validated end-to-end with `hardware_stub_ecp5.py` (`Result: UNSAT` confirmed on real hardware)
 - Phase 1 (Seeds): next — per-module spec documents + first valid Amaranth seed per module
 - Phase 2+ (Inner Loop, Composition, Outer Loop): future
 
