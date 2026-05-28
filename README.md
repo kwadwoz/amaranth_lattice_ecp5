@@ -1,6 +1,6 @@
 # Amaranth HDL on Lattice ECP5 Evaluation Board
 
-Learning project exploring hardware design with [Amaranth HDL](https://amaranth-lang.org/) on the **Lattice LFE5UM5G-85F Evaluation Board** (LFE5UM5G-85F-EVN), working toward a CDCL SAT solver accelerator.
+Hardware design project using [Amaranth HDL](https://amaranth-lang.org/) on the **Lattice LFE5UM5G-85F Evaluation Board** (LFE5UM5G-85F-EVN), building toward an autonomous FPGA SAT solver accelerator driven by an openEvolve-based agentic framework.
 
 ---
 
@@ -29,22 +29,46 @@ source ~/.zshrc
 **Python dependencies:**
 
 ```bash
-pip install amaranth
+pip install amaranth pyserial
+```
+
+**SymbiYosys** (formal verification — included in OSS CAD Suite):
+```bash
+sby --version   # should print SBY v0.65
 ```
 
 ---
 
 ## Files
 
+**Hardware designs:**
+
 | File | Description |
 |---|---|
-| `Tutoroal.py` | Amaranth tutorial exercises — constants, signals, counters, simulation |
-| `DPLL.py` | DPLL SAT solver in Python (Algorithm 5.1/5.2) — software reference |
-| `traffic_light_ecp5.py` | Traffic light FSM on the FPGA — first hardware design |
+| `traffic_light_ecp5.py` | Traffic light FSM — first hardware design |
 | `passthrough_ecp5.py` | Switch → LED passthrough — I/O connectivity test |
-| `uart_echo_ecp5.py` | UART echo design — receives bytes over serial and sends them back |
-| `hello_fpga.py` | Python host script — sends a message over UART and prints the echo |
+| `uart_echo_ecp5.py` | UART echo — receives bytes over serial and sends them back |
 | `ecp5-5g-evn.cfg` | OpenOCD config for programming the ECP5-5G EVN board |
+
+**Host scripts:**
+
+| File | Description |
+|---|---|
+| `hello_fpga.py` | Sends a message over UART and prints the echo |
+| `sat_experiment.py` | Sends a DIMACS CNF over UART, prints SAT/UNSAT result |
+| `DPLL.py` | DPLL SAT solver in Python (Algorithm 5.1/5.2) — software reference |
+| `Tutoroal.py` | Amaranth tutorial exercises — constants, signals, counters, simulation |
+
+**Infrastructure (Phase 0 harness — frozen, not modified by agents):**
+
+| File | Description |
+|---|---|
+| `infrastructure/contracts.py` | Single source of truth: `Result`, `Status`, `Stats`, `CNF`, wire-format constants |
+| `infrastructure/fpga_interface.py` | Abstract base class — defines `build()`, `program()`, `run()`, `solve_sat()` |
+| `infrastructure/sim_backend.py` | Pure-software backend — runs solver core in Python, no hardware needed |
+| `infrastructure/ecp5_uart_backend.py` | Hardware backend skeleton — `NotImplementedError` stubs with documented intent |
+| `infrastructure/stub_core.py` | Brute-force fake solver — exercises the loop end-to-end without real hardware |
+| `tests/test_roundtrip.py` | 14 pytest tests proving the full host → backend → core → Result loop works |
 
 ---
 
@@ -123,11 +147,34 @@ LED 0 (A13) lights while receiving, LED 1 (A12) lights while transmitting.
 
 ## Project Direction
 
-The end goal is a **CDCL (Conflict-Driven Clause Learning) SAT solver accelerator** on the ECP5 FPGA. CDCL extends DPLL with clause learning and non-chronological backtracking — the algorithm used by all modern SAT solvers (MiniSAT, Z3, CaDiCaL).
+The goal is an autonomous **CDCL SAT solver accelerator** on the ECP5, driven by an openEvolve-based agentic framework that evolves Amaranth HDL designs and evaluates them through a cascading hardware verification pipeline.
 
-The software DPLL implementation in `DPLL.py` serves as a functional reference for the hardware design.
+**Architecture (from the design doc):**
 
-A UART interface (via CP2102 USB adapter on GPIO header J39) will be used to stream CNF formulas to the FPGA and receive satisfying assignments back to the host.
+```
+Outer Loop (Bayesian Optimization)
+  └── Inner Loop (openEvolve per module)
+        └── Cascading Evaluator (6 stages)
+              1. Amaranth elaboration
+              2. Amaranth simulation (pytest)
+              3. SymbiYosys formal verification  ← sby installed, not yet wired
+              4. Yosys resource check vs. budget
+              5. Full synthesis
+              6. nextpnr place-and-route (fmax target: 130–150 MHz on ECP5)
+```
+
+**Agent boundary:** agents modify Amaranth HDL solver kernels only (within `EVOLVE-BLOCK` markers). The host harness (`infrastructure/`) is frozen — agents cannot touch it.
+
+**Fixed host components (from design doc §1.3):**
+- **DIMACS Parser** — `read_dimacs()` in `contracts.py`
+- **Assignment Verifier** — checks returned assignments satisfy the formula in O(total literals). SAT results → `VERIFIED` or `CORRECTNESS_VIOLATION`. UNSAT results → `NOT_APPLICABLE` with optional DPLL cross-check as temporary safety net until SymbiYosys Stage 3 is wired up.
+
+**Phase status:**
+- Phase 0 (Host Harness): complete — `infrastructure/` built, 14 tests passing
+- Phase 1 (Seeds): next — per-module spec documents + first valid Amaranth seed per module
+- Phase 2+ (Inner Loop, Composition, Outer Loop): future
+
+**Reference:** SAT-Accel (Lo et al., FPGA '25) is the baseline — a CDCL solver on Xilinx UltraScale+. Direct port is not feasible (ECP5 has ~1/3 the LUTs, no URAMs, open-source tooling). The framework evolves new ECP5-native designs from minimal seeds.
 
 ---
 
