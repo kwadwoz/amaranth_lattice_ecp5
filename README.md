@@ -57,7 +57,10 @@ sby --version   # should print SBY v0.65
 |---|---|
 | `hello_fpga.py` | Sends a message over UART and prints the echo |
 | `sat_experiment.py` | Sends a DIMACS CNF over UART, prints SAT/UNSAT result |
-| `verifier.py`     | Host-side correctness oracle. Checks FPGA SAT/UNSAT answers against the formula |
+| `verifier.py` | Host-side correctness oracle — checks FPGA SAT/UNSAT answers against the formula; returns `VERIFIED`, `CORRECTNESS_VIOLATION`, or `NOT_APPLICABLE` |
+| `test_verifier_hw.py` | End-to-end integration test — runs a CNF through the FPGA and pipes the result into the verifier |
+| `test_simple.cnf` | SAT test formula — 3 variables, 3 clauses |
+| `test_unsat.cnf` | UNSAT test formula — 2 variables, 4 clauses |
 | `DPLL.py` | DPLL SAT solver in Python (Algorithm 5.1/5.2) — software reference |
 | `Tutoroal.py` | Amaranth tutorial exercises — constants, signals, counters, simulation |
 
@@ -194,7 +197,7 @@ Outer Loop (Bayesian Optimization)
 - **Assignment Verifier** — checks returned assignments satisfy the formula in O(total literals). SAT results → `VERIFIED` or `CORRECTNESS_VIOLATION`. UNSAT results → `NOT_APPLICABLE` with optional DPLL cross-check as temporary safety net until SymbiYosys Stage 3 is wired up.
 
 **Phase status:**
-- Phase 0 (Host Harness): complete — `infrastructure/` built, 14 tests passing, wire protocol validated end-to-end with `hardware_stub_ecp5.py` (`Result: UNSAT` confirmed on real hardware)
+- Phase 0 (Host Harness): complete — `infrastructure/` built, 14 tests passing, wire protocol validated end-to-end on real hardware, verifier confirmed catching `CORRECTNESS_VIOLATION` and `VERIFIED` against the hardware stub
 - Phase 1 (Seeds): next — per-module spec documents + first valid Amaranth seed per module
 - Phase 2+ (Inner Loop, Composition, Outer Loop): future
 
