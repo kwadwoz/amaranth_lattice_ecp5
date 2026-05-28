@@ -56,6 +56,7 @@ sby --version   # should print SBY v0.65
 |---|---|
 | `hello_fpga.py` | Sends a message over UART and prints the echo |
 | `sat_experiment.py` | Sends a DIMACS CNF over UART, prints SAT/UNSAT result |
+| `verifier.py`     | Host-side correctness oracle. Checks FPGA SAT/UNSAT answers against the formula |
 | `DPLL.py` | DPLL SAT solver in Python (Algorithm 5.1/5.2) — software reference |
 | `Tutoroal.py` | Amaranth tutorial exercises — constants, signals, counters, simulation |
 
