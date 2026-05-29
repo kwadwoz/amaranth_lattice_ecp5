@@ -1,7 +1,0 @@
-c Simple 3-variable SAT example
-c (x1 OR NOT x2 OR x3) AND (NOT x1 OR x2) AND (x2 OR x3)
-c Expected: SAT  e.g. x1=T x2=T x3=T
-p cnf 3 3
-1 -2 3 0
--1 2 0
-2 3 0
